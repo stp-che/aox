@@ -9,6 +9,7 @@
 #include "smtpclient.h"
 #include "address.h"
 #include "mailbox.h"
+#include "transid.h"
 #include "query.h"
 #include "scope.h"
 #include "sieve.h"
@@ -64,6 +65,8 @@ SmtpMailFrom::SmtpMailFrom( SMTP * s, SmtpParser * p )
     }
 
     EStringList paramsSeen;
+    bool transidPresent = false;
+    bool sizePresent = false;
     while ( p->ok() && !p->atEnd() ) {
         EString name = p->esmtpKeyword();
         if ( paramsSeen.contains( name.lower() ) )
@@ -73,12 +76,19 @@ SmtpMailFrom::SmtpMailFrom( SMTP * s, SmtpParser * p )
         if ( p->present( "=" ) )
             value = p->esmtpValue();
         p->whitespace();
-        if ( p->ok() )
+        if ( p->ok() ) {
             addParam( name, value );
+            if ( name == "transid" )
+                transidPresent = true;
+            if ( name == "size" )
+                sizePresent = true;
+        }
     }
 
     if ( server()->dialect() == SMTP::Submit && !server()->accessPermitted() )
         respond( 501, "Must use encrytion to send mail", "5.7.0" );
+    if ( !transidPresent || !sizePresent )
+        respond( 501, "Usage: MAIL FROM: <sender@domain> TRANSID=<12345@mail.org> SIZE=500000" );
 }
 
 
@@ -123,7 +133,7 @@ void SmtpMailFrom::addParam( const EString & name, const EString & value )
     else if ( name == "body" ) {
         if ( value.lower() == "7bit" ||
              value.lower() == "8bitmime" ||
-             value.lower() == "binarymine" ) {
+             value.lower() == "binarymime" ) {
             // nothing needed
         }
         else {
@@ -164,6 +174,13 @@ void SmtpMailFrom::addParam( const EString & name, const EString & value )
             server()->sieve()->setForwardingDate( tmp );
         else
             respond( 501, "Syntax problem wrt. ISO 8601 date-time" );
+    }
+    else if ( name == "transid" ) {
+        TransID transid( value );
+        if ( !transid.valid() )
+            respond( 501, "Usage: MAIL FROM: <sender@domain> TRANSID=<12345@mail.org> SIZE=500000" );
+
+        // XXX do what?
     }
     else {
         respond( 501,

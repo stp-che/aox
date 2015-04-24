@@ -6,6 +6,7 @@ doc/man/*
 doc/html/*
 buildinfo.*
 Jamhacks
+tags
 *.inc
 *~
 #*#
