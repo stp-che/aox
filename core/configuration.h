@@ -134,6 +134,7 @@ public:
         SoftBounce,
         CheckSenderAddresses,
         UseImapQuota,
+        UseXTAXFTC,
         // additional toggles go ABOVE THIS LINE
         NumToggles
     };

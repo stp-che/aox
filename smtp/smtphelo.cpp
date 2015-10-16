@@ -67,6 +67,8 @@ SmtpHelo::SmtpHelo( SMTP * s, SmtpParser * p, Type t )
         respond( 0, "SIZE" );
         respond( 0, "DSN" );
         respond( 0, "CHECKPOINT" );
+        if ( Configuration::toggle( Configuration::UseXTAXFTC ) )
+            respond( 0, "XTAXFTC" );
     }
     finish();
 }

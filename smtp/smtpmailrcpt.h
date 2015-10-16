@@ -18,6 +18,8 @@ public:
 
 private:
     class SmtpMailFromData * d;
+
+    void respondTaxUsageError();
 };
 
 

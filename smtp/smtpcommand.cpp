@@ -85,6 +85,7 @@ void SmtpCommand::emitResponses()
     Scope x( log() );
     EString r;
     EString n = fn( d->responseCode );
+    d->response.removeDuplicates();
     EStringList::Iterator it( d->response );
     uint crlf = 0;
     while ( it ) {

@@ -243,7 +243,8 @@ static struct {
     { "use-statistics", Configuration::UseStatistics, false },
     { "soft-bounce", Configuration::SoftBounce, true },
     { "check-sender-addresses", Configuration::CheckSenderAddresses, false },
-    { "use-imap-quota", Configuration::UseImapQuota, true }
+    { "use-imap-quota", Configuration::UseImapQuota, true },
+    { "use-xtaxftc", Configuration::UseXTAXFTC, false }
 };
 
 

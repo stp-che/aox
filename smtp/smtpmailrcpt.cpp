@@ -67,6 +67,7 @@ SmtpMailFrom::SmtpMailFrom( SMTP * s, SmtpParser * p )
     EStringList paramsSeen;
     bool transidPresent = false;
     bool sizePresent = false;
+    bool xtaxftcPresent = false;
     while ( p->ok() && !p->atEnd() ) {
         EString name = p->esmtpKeyword();
         if ( paramsSeen.contains( name.lower() ) )
@@ -82,13 +83,20 @@ SmtpMailFrom::SmtpMailFrom( SMTP * s, SmtpParser * p )
                 transidPresent = true;
             if ( name == "size" )
                 sizePresent = true;
+            if ( name == "xtaxftc" )
+                xtaxftcPresent = true;
         }
     }
 
     if ( server()->dialect() == SMTP::Submit && !server()->accessPermitted() )
         respond( 501, "Must use encrytion to send mail", "5.7.0" );
-    if ( !transidPresent || !sizePresent )
-        respond( 501, "Usage: MAIL FROM: <sender@domain> TRANSID=<12345@mail.org> SIZE=500000" );
+
+    if ( server()->dialect() == SMTP::Smtp ) {
+        if ( !transidPresent || !sizePresent ||
+             ( Configuration::toggle( Configuration::UseXTAXFTC ) && !xtaxftcPresent ) ) {
+            respondTaxUsageError();
+        }
+    }
 }
 
 
@@ -178,8 +186,11 @@ void SmtpMailFrom::addParam( const EString & name, const EString & value )
     else if ( name == "transid" ) {
         TransID transid( value );
         if ( !transid.valid() )
-            respond( 501, "Usage: MAIL FROM: <sender@domain> TRANSID=<12345@mail.org> SIZE=500000" );
+            respondTaxUsageError();
 
+        // XXX do what?
+    }
+    else if ( name == "xtaxftc" ) {
         // XXX do what?
     }
     else {
@@ -235,6 +246,15 @@ void SmtpMailFrom::execute()
         respond( 250, "Accepted message from " + d->address->lpdomain(),
                  "2.1.0" );
     finish();
+}
+
+
+void SmtpMailFrom::respondTaxUsageError()
+{
+    EString msg("Usage: MAIL FROM: <sender@domain> TRANSID=<12345@mail.org> SIZE=500000");
+    if ( Configuration::toggle( Configuration::UseXTAXFTC ) )
+        msg.append(" XTAXFTC=01");
+    respond( 501, msg );
 }
 
 
